@@ -1,0 +1,14 @@
+{
+  "name": "reflection-token",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "The-Malcmann",
+  "license": "ISC",
+  "devDependencies": {
+    "hardhat": "^2.18.0"
+  }
+}

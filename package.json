@@ -9,6 +9,17 @@
   "author": "The-Malcmann",
   "license": "ISC",
   "devDependencies": {
-    "hardhat": "^2.18.0"
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.9",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.18.0",
+    "mocha": "^10.2.0"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "ethers": "^6.8.0",
+    "npm-force-resolutions": "^0.0.10"
   }
 }

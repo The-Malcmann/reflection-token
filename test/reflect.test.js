@@ -1,6 +1,6 @@
 const { expect } = require("chai");
-const helpers = require("@nomicfoundation/hardhat-network-helpers");
-const { days } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration");
+// const helpers = require("@nomicfoundation/hardhat-network-helpers");
+// const { days } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration");
 
 describe("Token contract", function () {
     // it("Deployment should assign the total supply of tokens to the owner", async function () {
@@ -129,7 +129,7 @@ async function getPair(address) {
 async function addInitialLiquidity(owner) {
   const Factory = await ethers.getContractFactory("UniswapV2Factory", owner);
   const Router = await ethers.getContractFactory("UniswapV2Router02", owner);
-  const WETH = await ethers.getContractFactory("WETH9", owner);
+  const WETH = await ethers.getContractFactory("WETH", owner);
   const weth = await WETH.deploy();
   const factory = await Factory.deploy(owner.address);
   console.log('addresses: ', await weth.getAddress(), factory.address)

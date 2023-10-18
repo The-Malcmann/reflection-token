@@ -86,31 +86,32 @@ contract Mining is Ownable {
         // In production, DAI will be the first reserve, as it is always deployed before DAMO
         // (Uniswap uses the timestamps as a part of the compared hash value when ordering two tokens in a pair)
         // reference: UniswapV2Library, 20
-        uint112 daiReserves;
-        uint112 damoReserves;
+        uint112 wethReserves;
+        uint112 fdicReserves;
         uint32 blockTimestampLast;
         wethAddress == pair.token0()
-            ? (daiReserves, damoReserves, blockTimestampLast) = pair
+            ? (wethReserves, fdicReserves, blockTimestampLast) = pair
                 .getReserves()
-            : (damoReserves, daiReserves, blockTimestampLast) = pair
+            : (fdicReserves, wethReserves, blockTimestampLast) = pair
             .getReserves();
 
         // Amount of DAI the LP represents
-        uint256 wethLp = (_lpTokenAmount * daiReserves) / pair.totalSupply();
+        uint256 wethLp = (_lpTokenAmount * wethReserves) / pair.totalSupply();
 
         // Amount of DAMO the LP represents
-        uint256 fdicLp = (_lpTokenAmount * damoReserves) /
+        uint256 fdicLp = (_lpTokenAmount * fdicReserves) /
             pair.totalSupply();
 
-        uint256 daiValueInDAMO = oracle.consult(wethAddress, wethLp);
-        // uint256 daiValueNoTwap = UniswapV2Library.quote(
-        //     wethLp,
-        //     daiReserves,
-        //     damoReserves
-        // );
+        // uint256 daiValueInDAMO = oracle.consult(wethAddress, wethLp);
+        uint256 wethValueNoTwap = UniswapV2Library.quote(
+            wethLp,
+            wethReserves,
+            fdicReserves
+        );
 
         // Theoretical representation of LP in DAMO, after the trade of DAI for DAMO
-        uint256 lpValueInDAMO = daiValueInDAMO + fdicLp;
+        uint256 lpValueInDAMO = wethValueNoTwap + fdicLp;
+        // uint256 lpValueInDAMO = daiValueInDAMO + fdicLp;
 
         // Now that we have the DAMO value of the LP, we simply give the depositor more DAMO than their LP is worth, thus a discounted price
         return lpValueInDAMO + _applyDiscount(lpValueInDAMO);

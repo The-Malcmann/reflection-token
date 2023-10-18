@@ -1,4 +1,5 @@
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.2;
 
 import "../Uniswap/interfaces/IUniswapV2Pair.sol";
 import "../Uniswap/libraries/FixedPoint.sol";

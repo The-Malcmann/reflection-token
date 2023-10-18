@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IUniswapV2Callee",
-  "sourceName": "contracts/uniswap/interfaces/IUniswapV2Callee.sol",
+  "sourceName": "contracts/Uniswap/interfaces/IUniswapV2Callee.sol",
   "abi": [
     {
       "inputs": [

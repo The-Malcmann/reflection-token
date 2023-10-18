@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IMigrator",
-  "sourceName": "contracts/uniswap/UniswapV2Pair.sol",
+  "sourceName": "contracts/Uniswap/UniswapV2Pair.sol",
   "abi": [
     {
       "inputs": [],

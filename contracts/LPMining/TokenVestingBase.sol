@@ -1,20 +1,24 @@
-// inspired by: https://github.com/abdelhamidbakhta/token-vesting-contracts/blob/main/contracts/TokenVesting.sol
-// contracts/TokenVesting.sol
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.9;
+/*
+ * SPDX-License-Identifier: Unlicensed
+ * Copyright © 2020 reflect.finance. ALL RIGHTS RESERVED.
+ */
+pragma solidity ^0.8.2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./SafeMath.sol";
+// import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+// import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./interfaces/ITokenVestingBase.sol";
 
 /**
  * @title TokenVesting
  */
+// contract TokenVestingBase is ReentrancyGuard, ITokenVestingBase, /*AccessControl*/ {
 contract TokenVestingBase is ReentrancyGuard, ITokenVestingBase, AccessControl {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -84,10 +88,10 @@ contract TokenVestingBase is ReentrancyGuard, ITokenVestingBase, AccessControl {
      * @param token_ address of the ERC20 token contract
      */
     constructor(address token_, address multisig_) {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(ADMIN_ROLE, msg.sender);
+        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        grantRole(ADMIN_ROLE, msg.sender);
 
-        _setupRole(ADMIN_ROLE, multisig_);
+        grantRole(ADMIN_ROLE, multisig_);
         require(token_ != address(0x0));
         _token = IERC20(token_);
     }
@@ -228,6 +232,7 @@ contract TokenVestingBase is ReentrancyGuard, ITokenVestingBase, AccessControl {
         uint256 currentVestingCount = holdersVestingCount[_beneficiary];
         holdersVestingCount[_beneficiary] = currentVestingCount.add(1);
     }
+    
 
     /**
      * @notice Revokes the vesting schedule for given identifier.

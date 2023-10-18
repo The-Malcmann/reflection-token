@@ -1,7 +1,7 @@
 // inspired by: https://github.com/abdelhamidbakhta/token-vesting-contracts/blob/main/contracts/TokenVesting.sol
 // contracts/TokenVesting.sol
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.9;
+pragma solidity ^0.8.2;
 
 interface ITokenVestingBase {
     function getVestingSchedulesCountByBeneficiary(address _beneficiary)

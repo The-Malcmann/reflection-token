@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IERC20Uniswap",
-  "sourceName": "contracts/uniswap/interfaces/IERC20Uniswap.sol",
+  "sourceName": "contracts/Uniswap/interfaces/IERC20Uniswap.sol",
   "abi": [
     {
       "anonymous": false,

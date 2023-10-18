@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "IUniswapV2Pair",
-  "sourceName": "contracts/uniswap/interfaces/IUniswapV2Pair.sol",
+  "sourceName": "contracts/Uniswap/interfaces/IUniswapV2Pair.sol",
   "abi": [
     {
       "anonymous": false,

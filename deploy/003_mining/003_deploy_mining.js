@@ -14,12 +14,13 @@ const func = async function (hre) {
   // const oracle = await hre.deployments.get("PriceOracle");
   // console.log("ORACLE", oracle.address);
   // const TokenVestingBase = await hre.ethers.getContract("TokenVestingBase");
+  const gasPriceGwei = hre.ethers.parseUnits("50", "gwei");
   const TokenVestingBase = await hre.ethers.getContractAt(require('../../artifacts/contracts/LPMining/TokenVestingBase.sol/TokenVestingBase.json').abi, hre.addys.vesting)
   const config = {
     log: true,
     from: deployer,
     gasLimit: 2000000,
-    gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
+    gasPrice: gasPriceGwei,
     args: [
       hre.addys.fdic,
       hre.addys.weth,
@@ -48,7 +49,7 @@ const func = async function (hre) {
         log: true,
         from: deployer,
         gasLimit: 2000000,
-        gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
+        gasPrice: gasPriceGwei,
       },
       "grantRole",
       adminRole,
@@ -64,7 +65,7 @@ const func = async function (hre) {
         log: true,
         from: deployer,
         gasLimit: 2000000,
-        gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
+        gasPrice: gasPriceGwei,
       },
       "renounceRole",
       adminRole,

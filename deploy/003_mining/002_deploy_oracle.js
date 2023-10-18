@@ -7,18 +7,20 @@ const func = async function (hre) {
   const deployer = await (await hre.ethers.getSigners())[0].getAddress()
 
   const chainId = await hre.getChainId();
-//   const inputs = oracleDeployConfigs[chainId];
+  //   const inputs = oracleDeployConfigs[chainId];
 
-//   console.log("inputs", inputs);
-// COMBAK inputs are undefined, get something setup so these are added automatically
+  //   console.log("inputs", inputs);
+  // COMBAK inputs are undefined, get something setup so these are added automatically
+  const gasPriceGwei = hre.ethers.parseUnits("50", "gwei")
+
   const config = {
     log: true,
     from: deployer,
     gasLimit: 1000000,
-    gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
-    args: [hre.addys.pair, hre.addys.weth, hre.addys.fdic],
+    gasPrice: gasPriceGwei,
+    args: [ hre.addys.pair, hre.addys.weth, hre.addys.fdic],
   };
-//   (await hre.deployments.get("FDIC")).address
+  //   (await hre.deployments.get("FDIC")).address
   console.log('ORACLE')
   const oracle = await deploy("PriceOracle", config);
   console.log('oracle', oracle.address)

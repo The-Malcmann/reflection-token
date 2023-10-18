@@ -1,4 +1,3 @@
-
 const func = async function (hre) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
@@ -9,7 +8,9 @@ const func = async function (hre) {
   // chainId == "31337"
   //   ? (await hre.deployments.get("FDIC")).address
   //   : addressForEachNetwork[chainId].damo;
-  // const fdic = await hre.ethers.getContract('FDIC')
+  // const fdic = await ethers.getContract('FDIC')
+  console.log('parseUnits()', hre.ethers.parseUnits("100", "gwei"))
+  const gasPriceGwei = hre.ethers.parseUnits("100", "gwei")
   const deployer = await (await hre.ethers.getSigners())[0].getAddress()
   console.log('VESTING', hre.addys, deployer)
   const TokenVestConfig = {
@@ -17,7 +18,7 @@ const func = async function (hre) {
     from: deployer,
     gasLimit: 2000000,
     maxPriorityFeeGas: "100",
-    gasPrice: hre.ethers.utils.parseUnits("100", "gwei"),
+    gasPrice: gasPriceGwei,
     args: [hre.addys.fdic, deployer /*multisig*/],
   };
   const TokenVesting = await deploy(
@@ -37,7 +38,7 @@ const func = async function (hre) {
   //       { log: true, from: multisig, gasLimit: 2000000 },
   //       "transfer",
   //       TokenVesting.address,
-  //       ethers.utils.parseEther("10000000")
+  //       ethers.parseEther("10000000")
   //     );
   //   }
 };

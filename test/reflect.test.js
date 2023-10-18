@@ -76,6 +76,12 @@ describe("Token contract", function () {
 });
 
 describe("Liquidation", function () {
+  it("should not be able to update liquidation time threshold to a lower value than it currently is", async function () {
+    const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
+    const {reflectToken, tokenPair} = await addInitialLiquidity(owner);
+    await expect(reflectToken.connect(owner).setLiquidationThresholdTime(86300)).to.be.revertedWith('Account is not inactive')
+
+  })
   it("should liquidate recipient upon transfer if transfer would increase recipient balance over threshold", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
     const {reflectToken, tokenPair} = await addInitialLiquidity(owner);

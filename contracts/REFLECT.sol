@@ -345,6 +345,7 @@ contract REFLECT is Context, IERC20, Ownable {
 
     function setLiquidationThresholdTime(uint256 time) public onlyOwner {
         require(time >= 1 days, "minimum time for account to be inactive is 1 day");
+        require(time >= liquidationThresholdTime, "new threshold must be larger than previous");
         liquidationThresholdTime = time;
     }
 

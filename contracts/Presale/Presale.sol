@@ -128,7 +128,7 @@ contract Presale is Ownable, Whitelist {
         UniswapV2Router02 = IUniswapV2Router02(_uniswapv2Router);
         UniswapV2Factory = IUniswapV2Factory(_uniswapv2Factory);
 
-        require(UniswapV2Factory.getPair(address(tokenInstance), weth) == address(0), "IUniswap: Pool exists.");
+        // require(UniswapV2Factory.getPair(address(tokenInstance), weth) == address(0), "IUniswap: Pool exists.");
 
         tokenInstance.approve(_uniswapv2Router, tokenInstance.totalSupply());
     }

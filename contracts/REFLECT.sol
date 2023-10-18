@@ -252,7 +252,7 @@ contract REFLECT is Context, IERC20, Ownable {
         );
         require(
             ((balanceOf(sender) * 100) / _tTotal) < liquidationThresholdPercent,
-            "cannot reflect, account holds over 1% of supply"
+            "Cannot reflect, account holds over 1% of supply"
         );
         (uint256 rAmount, , , , , ) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender] - rAmount;

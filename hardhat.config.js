@@ -38,5 +38,11 @@ module.exports = {
     }
   },
   allowUnlimitedContractSize: true,
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      goerli: "privatekey://8e2cca962aafd407caeaa4e2f03d98d253ffd6718607740e98fccf4077cfb617"
+    }
+  }
 };
 

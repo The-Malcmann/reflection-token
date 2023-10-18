@@ -1,12 +1,11 @@
 const { ethers } = require('ethers')
 const func = async function (hre) {
-  console.log(hre.addys)
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
-  console.log(ethers.getContract)
   // console.log(ethers.ContractFactory.getContractAddress('UniswapV2Router02'))
   const deployer = await (await hre.ethers.getSigners())[0].getAddress()
-
+  const namedAccounts = await getNamedAccounts()
+console.log('DEPLOYER', namedAccounts)
   const FdicConfig = {
     log: true,
     from: deployer,

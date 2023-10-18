@@ -3,34 +3,30 @@ const func = async function (hre) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
-  const { deployer } = await getNamedAccounts();
+  const deployer = await (await hre.ethers.getSigners())[0].getAddress()
+  const multisig = await (await hre.ethers.getSigners())[4].getAddress()
 
-  const multisig = (await hre.etheres.getAccounts())[4]
-  const chainId = await hre.getChainId();
+  // const multisig = (await hre.etheres.getAccounts())[4]
   // let damoAddress = addressForEachNetwork[chainId].damo;
   // let daiAddress = addressForEachNetwork[chainId].dai;
-  const fdic = await hre.ethers.getContract('FDIC')
-  const weth = await hre.ethers.getContract('WETH')
-  const pair = await fdic.functions.uniswapV2Pair()
 
-  console.log(fdic)
 
-  const oracle = await hre.deployments.get("PriceOracle");
-  console.log("ORACLE", oracle.address);
-  const TokenVestingBase = await hre.ethers.getContract("TokenVestingBase");
-
+  // const oracle = await hre.deployments.get("PriceOracle");
+  // console.log("ORACLE", oracle.address);
+  // const TokenVestingBase = await hre.ethers.getContract("TokenVestingBase");
+  const TokenVestingBase = await hre.ethers.getContractAt(require('../../artifacts/contracts/LPMining/TokenVestingBase.sol/TokenVestingBase.json').abi, hre.addys.vesting)
   const config = {
     log: true,
     from: deployer,
     gasLimit: 2000000,
     gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
     args: [
-      fdic.address,
-      weth.address,
+      hre.addys.fdic,
+      hre.addys.weth,
       multisig,
-      TokenVestingBase.address,
-      oracle.address,
-      pair,
+      hre.addys.vesting,
+      hre.addys.oracle,
+      hre.addys.pair,
     ],
   };
 

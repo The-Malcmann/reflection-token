@@ -88,7 +88,7 @@ contract TokenVestingBase is ReentrancyGuard, ITokenVestingBase, AccessControl {
      * @param token_ address of the ERC20 token contract
      */
     constructor(address token_, address multisig_) {
-        grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         grantRole(ADMIN_ROLE, msg.sender);
 
         grantRole(ADMIN_ROLE, multisig_);

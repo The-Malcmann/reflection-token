@@ -42,10 +42,12 @@ contract PriceOracle is IPriceOracle, KeeperCompatibleInterface {
         uint112 reserve0;
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = pair.getReserves();
-        require(
-            reserve0 != 0 && reserve1 != 0,
-            "ExampleOracleSimple: NO_RESERVES"
-        ); // ensure that there's liquidity in the pair
+        
+        // COMBAK 17 Oct 2023 removed just for testing, ADD BACK IN FOR LAUNCH 
+        // require(
+        //     reserve0 != 0 && reserve1 != 0,
+        //     "ExampleOracleSimple: NO_RESERVES"
+        // ); // ensure that there's liquidity in the pair
     }
 
     function checkUpkeep(bytes calldata checkData)

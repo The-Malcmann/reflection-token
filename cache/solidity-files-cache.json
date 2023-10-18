@@ -144,8 +144,8 @@
       ]
     },
     "/Users/cooperbrown/projects/fdic/reflection-token/contracts/LPMining/TokenVestingBase.sol": {
-      "lastModificationDate": 1697644807593,
-      "contentHash": "92a5ff7a88c020318a038b21109e8eee",
+      "lastModificationDate": 1697648658600,
+      "contentHash": "5c07b156a572472321d68453352b045e",
       "sourceName": "contracts/LPMining/TokenVestingBase.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -1622,8 +1622,8 @@
       ]
     },
     "/Users/cooperbrown/projects/fdic/reflection-token/contracts/LPMining/PriceOracle.sol": {
-      "lastModificationDate": 1697644071377,
-      "contentHash": "ccfa2ad1fa2b8539b512c3182a991210",
+      "lastModificationDate": 1697649550333,
+      "contentHash": "73ae1a6117f008f9036b80a5dc4d8ad4",
       "sourceName": "contracts/LPMining/PriceOracle.sol",
       "solcConfig": {
         "version": "0.8.20",

@@ -42,7 +42,11 @@ const func = async function (hre) {
 
     console.log('Factory deployed at: ', factory.address)
     console.log('Router deployed at: ', router.address)
-    hre.addys = router.address
+    hre.addys = {
+        factory: factory.address,
+        router: router.address,
+        weth: weth.address
+    } 
 };
 
 func.tags = ["uniswap"];

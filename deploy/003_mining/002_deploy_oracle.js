@@ -4,7 +4,7 @@ const func = async function (hre) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
-  const { deployer, multisig } = await getNamedAccounts();
+  const deployer = await (await hre.ethers.getSigners())[0].getAddress()
 
   const chainId = await hre.getChainId();
 //   const inputs = oracleDeployConfigs[chainId];
@@ -16,11 +16,16 @@ const func = async function (hre) {
     from: deployer,
     gasLimit: 1000000,
     gasPrice: hre.ethers.utils.parseUnits("50", "gwei"),
-    args: [inputs.pair, inputs.dai, inputs.damo],
+    args: [hre.addys.pair, hre.addys.weth, hre.addys.fdic],
   };
 //   (await hre.deployments.get("FDIC")).address
-
-  const oracleDeploy = await deploy("PriceOracle", config);
+  console.log('ORACLE')
+  const oracle = await deploy("PriceOracle", config);
+  console.log('oracle', oracle.address)
+  hre.addys = {
+    ...hre.addys,
+    oracle: oracle.address
+  }
 };
 func.tags = ["oracle"];
 module.exports = func

@@ -78,11 +78,10 @@ contract Mining is Ownable {
      * a discount.
      * @param _lpTokenAmount amount of lp tokens to be deposited.
      */
-    function calculatePayout(uint256 _lpTokenAmount)
-        public
-        view
-        returns (uint256 fdicPayout)
-    {
+    function calculatePayout(
+        uint256 _lpTokenAmount
+    ) public view returns (uint256 fdicPayout) {
+        console.log("IN HERE");
         // In production, DAI will be the first reserve, as it is always deployed before DAMO
         // (Uniswap uses the timestamps as a part of the compared hash value when ordering two tokens in a pair)
         // reference: UniswapV2Library, 20
@@ -94,27 +93,29 @@ contract Mining is Ownable {
                 .getReserves()
             : (fdicReserves, wethReserves, blockTimestampLast) = pair
             .getReserves();
-
+        console.log("WETH", wethReserves);
+        console.log("FDIC", fdicReserves);
         // Amount of DAI the LP represents
         uint256 wethLp = (_lpTokenAmount * wethReserves) / pair.totalSupply();
 
         // Amount of DAMO the LP represents
-        uint256 fdicLp = (_lpTokenAmount * fdicReserves) /
-            pair.totalSupply();
+        uint256 fdicLp = (_lpTokenAmount * fdicReserves) / pair.totalSupply();
 
+        console.log("LP AMOUNT", fdicLp);
         // uint256 daiValueInDAMO = oracle.consult(wethAddress, wethLp);
         uint256 wethValueNoTwap = UniswapV2Library.quote(
             wethLp,
             wethReserves,
             fdicReserves
         );
+        console.log("LP VALUE", wethValueNoTwap);
 
         // Theoretical representation of LP in DAMO, after the trade of DAI for DAMO
-        uint256 lpValueInDAMO = wethValueNoTwap + fdicLp;
-        // uint256 lpValueInDAMO = daiValueInDAMO + fdicLp;
+        uint256 lpValueInFDIC = wethValueNoTwap + fdicLp;
+        // uint256 lpValueInFDIC = daiValueInDAMO + fdicLp;
 
         // Now that we have the DAMO value of the LP, we simply give the depositor more DAMO than their LP is worth, thus a discounted price
-        return lpValueInDAMO + _applyDiscount(lpValueInDAMO);
+        return lpValueInFDIC + _applyDiscount(lpValueInFDIC);
     }
 
     /**
@@ -137,19 +138,17 @@ contract Mining is Ownable {
         require(_lpTokenAmount > 0, "Invalid amount");
 
         // Transfer DAMO/DAI LP to multisig
-        bool success = pair.transferFrom(
-            msg.sender,
-            multisig,
-            _lpTokenAmount
-        );
+        console.log('TRANSFERRING');
+        bool success = pair.transferFrom(msg.sender, multisig, _lpTokenAmount);
+        console.log('transferred');
         require(success, "LP token transfer failed");
 
         // calculate fdicPayout to depositor
         uint256 fdicPayout = this.calculatePayout(_lpTokenAmount);
-
+        console.log("PAYOUT IN DEPOSIT", fdicPayout);
         // update total lp Tokens
         _updateLiquidity(_lpTokenAmount);
-
+        console.log('LP UPDATED');
         // Emit a deposit event with the address of the depositor, the amount of LP Tokens deposited,
         // and the amount of DAMO received as fdicPayout
         emit Capitalization(msg.sender, _lpTokenAmount, fdicPayout);
@@ -164,7 +163,7 @@ contract Mining is Ownable {
             false,
             fdicPayout
         );
-
+        console.log('VESTING CREATED');
         // update the total capitalization instances for the depositor
         totalCaps[msg.sender] += 1;
     }
@@ -182,11 +181,11 @@ contract Mining is Ownable {
      *
      *  @param _lpTokenAmount amount of lp tokens to be deposited.
      */
-    function _applyDiscount(uint256 _lpTokenAmount)
-        internal
-        view
-        returns (uint256)
-    {
+    function _applyDiscount(
+        uint256 _lpTokenAmount
+    ) internal view returns (uint256) {
+        console.log("DISCOUNT", discount);
+        console.log("LP TOKEN AMOUNT", _lpTokenAmount);
         return (discount * _lpTokenAmount) / 10000;
     }
 }

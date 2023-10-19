@@ -16,18 +16,18 @@ describe("Token contract", function () {
     await reflectToken.connect(owner).enableLiquidation();
     await reflectToken.connect(owner).enableTrading();
 
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000000.0", 9))
-    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1.0", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000000.0", 18))
+    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1.0", 18))
 
-    expect(await reflectToken.balanceOf(tokenHolderTwo)).to.eq(ethers.parseUnits("0.970000000", 9))
+    expect(await reflectToken.balanceOf(tokenHolderTwo)).to.eq(ethers.parseUnits("0.970000000000000002", 18))
     //owner is exempt from fees so
-    await reflectToken.connect(owner).transfer(tokenHolderThree.getAddress(), ethers.parseUnits("100000000.0", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderThree.getAddress(), ethers.parseUnits("100000000.0", 18))
     // to reflect fees we transfer from tokenholderThree to tokenHolderTwo and
-    await reflectToken.connect(tokenHolderThree).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("100000000.0", 9))
+    await reflectToken.connect(tokenHolderThree).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("100000000.0", 18))
     console.log(await reflectToken.balanceOf(tokenHolderTwo));
     console.log("balance tokenHOlderOne after transfer:",await reflectToken.balanceOf(tokenHolderOne));
     // expect the token balance of tokenHolderOne to be increased by some reflections
-    expect(await reflectToken.balanceOf(tokenHolderOne)).to.eq(ethers.parseUnits("9999999.002881008", 9))
+    expect(await reflectToken.balanceOf(tokenHolderOne)).to.eq(ethers.parseUnits("9999999.002881008306483640", 18))
 
   });
 
@@ -36,9 +36,9 @@ describe("Token contract", function () {
     const { reflectToken } = await deployWithoutAddingLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation();
 
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("100", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("100", 18))
 
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
     expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(0)
   });
 
@@ -47,28 +47,28 @@ describe("Token contract", function () {
     const { reflectToken } = await deployWithoutAddingLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation();
 
-    // await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000", 9))
-    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("20000", 9))
+    // await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000", 18))
+    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("20000", 18))
     await expect(reflectToken.connect(tokenHolderOne).liquidateInactiveWallet(tokenHolderTwo)).to.be.revertedWith('Account is not inactive')
     await helpers.time.increase(days(14));
 
     await reflectToken.connect(tokenHolderOne).liquidateInactiveWallet(tokenHolderTwo)
     expect(await reflectToken.balanceOf(tokenHolderTwo)).to.be.lessThan(ethers.parseUnits(".000001000"));
     // liquidator should receive 5% bounty
-    expect(await reflectToken.balanceOf(tokenHolderOne)).to.eq(ethers.parseUnits("1000.000000002", 9))
+    expect(await reflectToken.balanceOf(tokenHolderOne)).to.eq(ethers.parseUnits("1000.000000002736958136", 18))
   });
 
   it("contract should receive bounty on liquidation", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
     const { reflectToken, tokenPair } = await addInitialLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation()
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("69420133780081.3", 18))
     console.log("contract balance before", await reflectToken.balanceOf(reflectToken.getAddress()))
     
     //this transaction puts it at exactly 1% of total supply
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits(".05", 9))
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits(".05", 18))
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 18))
     console.log("contract balance after", await reflectToken.balanceOf(reflectToken.getAddress()))
   })
 
@@ -79,9 +79,9 @@ describe("Token contract", function () {
     console.log("pair balance of owner:", await tokenPair.balanceOf(owner.getAddress()))
     const [reserve0, reserve1, timestamp] = await tokenPair.getReserves();
     console.log("reserve0, reserve1", reserve0, reserve1)
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000", 9))
-    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("9999", 9))
-    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("10000", 18))
+    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("9999", 18))
+    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1", 18))
     console.log("pair balance of owner:", await tokenPair.balanceOf(owner.getAddress()))
     const [reserve0After, reserve1After, timestampAfter] = await tokenPair.getReserves();
     console.log("reserve0, reserve1", reserve0After, reserve1After)
@@ -93,8 +93,8 @@ describe("Token contract", function () {
     const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
     const { reflectToken } = await deployWithoutAddingLiquidity(owner);
 
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
-    expect(reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1", 9))).to.be.revertedWith("Trading is not yet enabled, once presale is finished it will open")
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
+    expect(reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1", 18))).to.be.revertedWith("Trading is not yet enabled, once presale is finished it will open")
 
 
   })
@@ -114,35 +114,33 @@ describe("Liquidation", function () {
     const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
     const { reflectToken, tokenPair } = await addInitialLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation()
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("69420133780081.3", 18))
     //this transaction puts it at exactly 1% of total supply
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits(".05", 9))
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits(".05", 18))
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 18))
   });
   it("should liquidate sender upon transfer if sender's balance is over threshold at time of transfer", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair } = await addInitialLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation()
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
     console.log("tokenHolderOne balance before large reflection:", await reflectToken.balanceOf(tokenHolderOne.getAddress()))
     //After this transaction, this whole amount will reflect to all tokenholders and reflect tokenHolderOne's balance above 1%
     console.log('contract token balance before auto-liquidation', await reflectToken.balanceOf(reflectToken.getAddress()))
-    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("69420133780081.35", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("69420133780081.35", 18))
     console.log('contract token balance after auto-liquidation', await reflectToken.balanceOf(reflectToken.getAddress()))
-    console.log("tokenHolderOne balance after large reflection:", await reflectToken.balanceOf(tokenHolderOne.getAddress()))
-    console.log("tokenHolderOne's % of supply after transaction", await reflectToken.getIntegerPercentOfSupply(tokenHolderOne.getAddress()))
-
-    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderThree.getAddress(), ethers.parseUnits("1", 9));
+    console.log('RESERVES', await tokenPair.getReserves());
+    await reflectToken.connect(tokenHolderOne).transfer(tokenHolderThree.getAddress(), ethers.parseUnits("1", 18));
     console.log("tokenHolderOne balance after transfer", await reflectToken.balanceOf(tokenHolderOne.getAddress()))
   });
   it("should liquidate recipient upon transfer from LP if transfer would increase recipient balance over threshold", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation();
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
     await router.connect(tokenHolderOne).swapExactETHForTokens(1, [wethAddress, reflectTokenAddress], tokenHolderOne.getAddress(), Date.now() + 500, { value: ethers.parseUnits("1", 18) })
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 18))
 
   });
 
@@ -150,19 +148,19 @@ describe("Liquidation", function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
     await reflectToken.connect(owner).enableLiquidation()
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 18))
     console.log("tokenHolderOne balance before large reflection:", await reflectToken.balanceOf(tokenHolderOne.getAddress()))
 
     //After this transaction, this whole amount will reflect to all tokenholders and reflect tokenHolderOne's balance above 1%
-    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("69420133780081.35", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("69420133780081.35", 18))
     console.log("tokenHolderOne balance after large reflection:", await reflectToken.balanceOf(tokenHolderOne.getAddress()))
     console.log("tokenHolderOne's % of supply after transaction", await reflectToken.getIntegerPercentOfSupply(tokenHolderOne.getAddress()))
 
-    await reflectToken.connect(tokenHolderOne).approve(routerAddress, ethers.parseUnits("6942013378008135", 9))
+    await reflectToken.connect(tokenHolderOne).approve(routerAddress, ethers.parseUnits("6942013378008135", 18))
 
     // If they try to swap tokens for ETH (transfer tokens to LP)
-    await router.connect(tokenHolderOne).swapExactTokensForETHSupportingFeeOnTransferTokens(ethers.parseUnits("100", 9), 1, [reflectTokenAddress, wethAddress], tokenHolderOne.getAddress(), Date.now() + 1000)
-    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
+    await router.connect(tokenHolderOne).swapExactTokensForETHSupportingFeeOnTransferTokens(ethers.parseUnits("100", 18), 1, [reflectTokenAddress, wethAddress], tokenHolderOne.getAddress(), Date.now() + 1000)
+    expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 18))
 
 
   });
@@ -171,7 +169,7 @@ describe("Liquidation", function () {
     const { reflectToken, tokenPair, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
     // await reflectToken.connect(owner).enableLiquidation()
 
-    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.35", 9))
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.35", 18))
     await expect(reflectToken.connect(tokenHolderOne).reflect(tokenHolderOne.getAddress())).to.be.revertedWith('Cannot reflect, account holds over 1% of supply')
 
   });
@@ -182,9 +180,9 @@ describe("Liquidation", function () {
   it("should never liquidiate LP", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair, weth, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
-    await reflectToken.connect(owner).approve(routerAddress, ethers.parseUnits("6942013378008135", 9))
     console.log("owner balance:", await reflectToken.balanceOf(owner.getAddress()))
     await reflectToken.connect(owner).enableLiquidation();
+    await reflectToken.connect(owner).approve(routerAddress, ethers.parseUnits("6942013378008135", 18))
     await weth.connect(owner).approve(routerAddress, ethers.parseUnits("10000000000000", 18))
 
     await router
@@ -192,7 +190,7 @@ describe("Liquidation", function () {
       .addLiquidity(
         reflectTokenAddress,
         wethAddress,
-        ethers.parseUnits("694201337800813.5", 9),
+        ethers.parseUnits("69420133780081.35", 18),
         ethers.parseUnits("10", 18),
         1,
         1,
@@ -213,7 +211,7 @@ describe("Presale", function () {
     const [owner, tokenHolderOne, tokenHolderTwo, teamWallet, presaleOne, presaleTwo, presaleThree, presaleFour, presaleFive, presaleSix, presaleSeven, presaleEight, presaleNine, presaleTen] = await ethers.getSigners();
     const { reflectToken, factoryAddress, routerAddress, wethAddress } = await deployWithoutAddingLiquidity(owner);
     const Presale = await ethers.getContractFactory("Presale");
-    const presale = await Presale.deploy(await reflectToken.getAddress(), 9, routerAddress, factoryAddress, await teamWallet.getAddress(), wethAddress, false, false);
+    const presale = await Presale.deploy(await reflectToken.getAddress(), 18, routerAddress, factoryAddress, await teamWallet.getAddress(), wethAddress, false, false);
     console.log("presale address", await presale.getAddress())
 
     //.01% of supply
@@ -258,7 +256,7 @@ async function addInitialLiquidity(owner) {
   const reflectToken = await ReflectToken.deploy(owner.getAddress(), routerAddress);
   const reflectTokenAddress = await reflectToken.getAddress();
 
-  await weth.connect(owner).deposit({ value: ethers.parseUnits("1000.0", 18) })
+  await weth.connect(owner).deposit({ value: ethers.parseUnits("100.0", 18) })
 
   await weth.connect(owner).approve(routerAddress, ethers.parseUnits("10000000000000", 18))
   await reflectToken.connect(owner).approve(routerAddress, ethers.parseUnits("6942013378008135", 18))
@@ -267,7 +265,7 @@ async function addInitialLiquidity(owner) {
     .addLiquidity(
       reflectTokenAddress,
       wethAddress,
-      ethers.parseUnits("694201337800813.5", 9),
+      ethers.parseUnits("694201337800813.5", 18),
       ethers.parseUnits("10", 18),
       1,
       1,

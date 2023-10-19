@@ -28,13 +28,13 @@ contract REFLECT is Context, IERC20, Ownable {
     address[] private _excluded;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 private constant _tTotal = 6942013378008135 * 10 ** 9;
+    uint256 private constant _tTotal = 6942013378008135 * 10 ** 18;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
     string private _name = "FDIC";
     string private _symbol = "FDIC";
-    uint8 private _decimals = 9;
+    uint8 private _decimals = 18;
 
     uint256 public _taxFee = 2;
     uint256 private _previousTaxFee = _taxFee;
@@ -57,7 +57,7 @@ contract REFLECT is Context, IERC20, Ownable {
     bool public tradingEnabled = false;
 
     // .05% of total supply 
-    uint256 private numTokensSellToAddToLiquidity = 3471006689004 * 10 ** 9;
+    uint256 private numTokensSellToAddToLiquidity = 3471006689004 * 10 ** 18;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -725,7 +725,7 @@ contract REFLECT is Context, IERC20, Ownable {
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
         uint256 half = contractTokenBalance / 2;
-        uint256 otherHalf = contractTokenBalance / half;
+        uint256 otherHalf = contractTokenBalance - half;
 
         // capture the contract's current ETH balance.
         // this is so that we can capture exactly the amount of ETH that the
@@ -738,7 +738,8 @@ contract REFLECT is Context, IERC20, Ownable {
 
         // how much ETH did we just swap into?
         uint256 newBalance = address(this).balance - initialBalance;
-
+        console.log("ETH Balance to add", newBalance);
+        console.log("fdic to add", otherHalf);
         // add liquidity to uniswap
         addLiquidity(otherHalf, newBalance);
 

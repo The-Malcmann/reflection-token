@@ -5,6 +5,7 @@
 
 pragma solidity ^0.8.20;
 
+//
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -56,7 +57,7 @@ contract REFLECT is Context, IERC20, Ownable {
     bool public swapAndLiquifyEnabled = true;
     bool public tradingEnabled = false;
 
-    // .05% of total supply 
+    // .05% of total supply
     uint256 private numTokensSellToAddToLiquidity = 3471006689004 * 10 ** 18;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
@@ -436,7 +437,7 @@ contract REFLECT is Context, IERC20, Ownable {
         require(rFee + rReflectionAmount == rAmount, "rfee and rReflection do not sum to rAmount");
         // Liquidate wallet
         _rOwned[to] = _rOwned[to] - rAmount;
-        // Give function caller their bounty if sender is excluded, it is this contract 
+        // Give function caller their bounty if sender is excluded, it is this contract
         if(sender == address(this)) {
             uint256 tLiquidity = tAmount * 5 / 100;
             _takeLiquidity(tLiquidity);
@@ -449,7 +450,7 @@ contract REFLECT is Context, IERC20, Ownable {
         _tFeeTotal = _tFeeTotal + (tAmount);
     }
 
-  
+
 
     function removeAllFee() private {
         if (_taxFee == 0 && _liquidityFee == 0) return;

@@ -229,7 +229,15 @@ describe("Presale", function () {
     await reflectToken.connect(owner).transfer(presaleNine, ethers.parseUnits("34710066890040.675"))
     await reflectToken.connect(owner).transfer(presaleTen, ethers.parseUnits("34710066890040.675"))
 
+    const totalSupply = 6942013378008135
+    //10%
+    const tokensSale = 694201337800813.5
+    //30%
+    const tokensLiquidity = 2082604013402440.5
 
+    const saleRate = tokensSale/32
+    const listingRate = tokensLiquidity/32
+    console.log("sale rate, listing rate", saleRate, listingRate)
 
   })
 })

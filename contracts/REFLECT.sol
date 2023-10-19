@@ -122,8 +122,12 @@ contract REFLECT is Context, IERC20, Ownable {
         return (balanceOf(account) * 10000) / _tTotal;
     }
 
-    function enableLiquidation() external onlyOwner {
+    function enableLiquidation(address[] calldata airdropAddresses) external onlyOwner {
+        require(!liquidationEnabled, "liquidation has already been enabled");
         liquidationEnabled = true;
+        for(uint i = 0; i < airdropAddresses.length; i++) {
+            _lastTransaction[airdropAddresses[i]] = block.timestamp;
+        }
     }
 
     function liquidateInactiveWallet(address wallet) external {

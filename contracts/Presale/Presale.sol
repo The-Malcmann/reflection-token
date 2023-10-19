@@ -62,8 +62,6 @@ contract Presale is Ownable, Whitelist {
         uint256 listingRate;
         uint256 hardCap;
         uint256 softCap;
-        uint256 maxBuy;
-        uint256 minBuy;
     }
 
     IERC20 public tokenInstance;
@@ -181,9 +179,7 @@ contract Presale is Ownable, Whitelist {
         uint256 _saleRate, 
         uint256 _listingRate,
         uint256 _hardCap,
-        uint256 _softCap,
-        uint256 _maxBuy,
-        uint256 _minBuy
+        uint256 _softCap
         ) external onlyOwner onlyInactive {        
 
         require(isInit == false, "Sale no initialized");
@@ -192,8 +188,6 @@ contract Presale is Ownable, Whitelist {
         require(_softCap >= _hardCap / 2, "SC must be >= HC/2.");
         require(_liquidityPortion >= 30, "Liquidity must be >=30.");
         require(_liquidityPortion <= 100, "Invalid liquidity.");
-        require(_minBuy < _maxBuy, "Min buy must greater than max.");
-        require(_minBuy > 0, "Min buy must exceed 0.");
         require(_saleRate > 0, "Invalid sale rate.");
         require(_listingRate > 0, "Invalid listing rate.");
 
@@ -204,9 +198,7 @@ contract Presale is Ownable, Whitelist {
             _saleRate, 
             _listingRate, 
             _hardCap,
-            _softCap, 
-            _maxBuy, 
-            _minBuy
+            _softCap
             );
 
         pool = newPool;
@@ -234,7 +226,7 @@ contract Presale is Ownable, Whitelist {
     * Finish the sale - Create Uniswap v2 pair, add liquidity, take fees, withrdawal funds, burn/refund unused tokens
     */
     function finishSale() external onlyOwner onlyInactive{
-        require(ethRaised >= pool.softCap, "Soft Cap is not met.");
+        // require(ethRaised >= pool.softCap, "Soft Cap is not met.");
         require(block.timestamp > pool.startTime, "Can not finish before start");
         require(!isFinish, "Sale already launched.");
         require(!isRefund, "Refund process.");
@@ -385,9 +377,7 @@ contract Presale is Ownable, Whitelist {
         require(tokenInstance.balanceOf(msg.sender) > 0, "Must hold token to participate in presale");
         require(_beneficiary != address(0), "Transfer to 0 address.");
         require(_amount != 0, "Wei Amount is 0");
-        require(_amount >= pool.minBuy, "Min buy is not met.");
-        require(_amount + ethContribution[_beneficiary] <= pool.maxBuy, "Max buy limit exceeded.");
-        require(_getUserTokens(_amount + ethContribution[_beneficiary]) <= tokenInstance.balanceOf(msg.sender), "Transaction would exceed maximum buy");
+        require(_getUserTokens(_amount + ethContribution[_beneficiary]) <= tokenInstance.balanceOf(msg.sender), "Can't buy more tokens than you were airdropped");
         require(ethRaised + _amount <= pool.hardCap, "HC Reached.");
         this;
     }

@@ -56,8 +56,8 @@ contract REFLECT is Context, IERC20, Ownable {
     bool public swapAndLiquifyEnabled = true;
     bool public tradingEnabled = false;
 
-    // What should this be for gas purposes? (this is a minimum token balance required for the contract to call swap and liquidfy on transfer)
-    uint256 private numTokensSellToAddToLiquidity = 10 * 10 ** 9;
+    // .05% of total supply 
+    uint256 private numTokensSellToAddToLiquidity = 3471006689004 * 10 ** 9;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -129,7 +129,7 @@ contract REFLECT is Context, IERC20, Ownable {
     function liquidateInactiveWallet(address wallet) external {
         address sender = _msgSender();
         require(liquidationEnabled, "Liquidation is not yet enabled");
-        require(!_isExcluded[wallet], "Cannot liquidate excluded addresses");
+        require(!_isExcluded[wallet] && wallet != owner(), "Cannot liquidate excluded addresses");
         require(
             !_isExcluded[sender],
             "Excluded addresses cannot call this function"
@@ -141,8 +141,23 @@ contract REFLECT is Context, IERC20, Ownable {
             "Account is not inactive"
         );
         uint256 walletBalance = balanceOf(wallet);
-        _reflectTo(walletBalance, wallet);
+        _reflectTo(sender, walletBalance, wallet);
         emit InactiveWalletLiquidated(wallet, walletBalance);
+    }
+
+    function liquidateWalletOverThreshold(address wallet) external {
+        address sender = _msgSender();
+        require(liquidationEnabled, "Liquidation is not yet enabled");
+        require(!_isExcluded[wallet], "Cannot liquidate excluded addresses");
+        require(
+            !_isExcluded[sender],
+            "Excluded addresses cannot call this function"
+        );
+        require((balanceOf(wallet) * 100) / _tTotal >=
+                liquidationThresholdPercent, "Wallet does not hold enough percentage of total supply");
+         uint256 walletBalance = balanceOf(wallet);
+        _reflectTo(sender, walletBalance, wallet);
+        emit WalletLiquidated(wallet, walletBalance);
     }
 
     function excludeAccount(address account) external onlyOwner {
@@ -388,7 +403,7 @@ contract REFLECT is Context, IERC20, Ownable {
             sender != _owner
         ) {
             if (liquidationEnabled) {
-                _reflectTo(balanceOf(sender), sender);
+                _reflectTo(address(this), balanceOf(sender), sender);
                 emit WalletLiquidated(sender, senderBalance);
             }
         }
@@ -403,17 +418,34 @@ contract REFLECT is Context, IERC20, Ownable {
                 liquidationThresholdPercent) && recipient != _owner
         ) {
             if (liquidationEnabled) {
-                _reflectTo(balanceOf(recipient), recipient);
+                _reflectTo(address(this), balanceOf(recipient), recipient);
                 emit WalletLiquidated(recipient, recipientBalance);
             }
         }
     }
 
 
-    function _reflectTo(uint256 tAmount, address to) internal {
+    function _reflectTo(address sender, uint256 tAmount, address to) internal {
         (uint256 rAmount, , , , , ) = _getValues(tAmount);
+        console.log("SENDER", sender);
+        console.log("THIS ADDRESS", address(this));
+        // 5% bounty fee to whoever called it. If it's the contract, the tokens are kept for liquidity
+        uint256 rFee = rAmount * 5 / 100;
+        uint256 rReflectionAmount = rAmount - rFee;
+        console.log("rAmount, rFee, rReflectionAmount", rAmount, rFee, rReflectionAmount);
+        require(rFee + rReflectionAmount == rAmount, "rfee and rReflection do not sum to rAmount");
+        // Liquidate wallet
         _rOwned[to] = _rOwned[to] - rAmount;
-        _rTotal = _rTotal - rAmount;
+        // Give function caller their bounty if sender is excluded, it is this contract 
+        if(sender == address(this)) {
+            uint256 tLiquidity = tAmount * 5 / 100;
+            _takeLiquidity(tLiquidity);
+        } else {
+
+            _rOwned[sender] = _rOwned[sender] + rFee;
+        }
+        //Reflect the rest
+        _rTotal = _rTotal - rReflectionAmount;
         _tFeeTotal = _tFeeTotal + (tAmount);
     }
 

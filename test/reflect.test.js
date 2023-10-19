@@ -71,6 +71,16 @@ describe("Token contract", function () {
 
   });
 
+  it("should not be able to transfer until trading is enabled", async function () {
+    const [owner, tokenHolderOne, tokenHolderTwo] = await ethers.getSigners();
+    const { reflectToken } = await deployWithoutAddingLiquidity(owner);
+
+    await reflectToken.connect(owner).transfer(tokenHolderOne.getAddress(), ethers.parseUnits("69420133780081.3", 9))
+    expect(reflectToken.connect(tokenHolderOne).transfer(tokenHolderTwo.getAddress(), ethers.parseUnits("1", 9))).to.be.revertedWith("Trading is not yet enabled, once presale is finished it will open")
+
+
+  })
+
 
 
 });
@@ -114,13 +124,8 @@ describe("Liquidation", function () {
     await router.connect(tokenHolderOne).swapExactETHForTokens(1, [wethAddress, reflectTokenAddress], tokenHolderOne.getAddress(), Date.now() + 500, { value: ethers.parseUnits("1", 18) })
     expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
 
-    await reflectToken.connect(tokenHolderTwo).approve(routerAddress, ethers.parseUnits("10000000000000", 18))
-
-    await router.connect(tokenHolderTwo).swapExactETHForTokens(1, [wethAddress, reflectTokenAddress], tokenHolderTwo.getAddress(), Date.now() + 500, { value: ethers.parseUnits("1", 18) })
-    await router.connect(tokenHolderTwo).swapExactTokensForETHSupportingFeeOnTransferTokens(ethers.parseUnits("100", 9), 1, [reflectTokenAddress, wethAddress], tokenHolderTwo.getAddress(), Date.now() + 500)
-    
-
   });
+
   it("should liquidate sender upon transfer to LP if sender's balance is over threshold at time of transfer", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
@@ -136,7 +141,7 @@ describe("Liquidation", function () {
     await reflectToken.connect(tokenHolderOne).approve(routerAddress, ethers.parseUnits("6942013378008135", 9))
 
     // If they try to swap tokens for ETH (transfer tokens to LP)
-    await router.connect(tokenHolderOne).swapExactTokensForETHSupportingFeeOnTransferTokens(ethers.parseUnits("100000000000", 9), 1, [reflectTokenAddress, wethAddress], tokenHolderOne.getAddress(), Date.now() + 500)
+    await router.connect(tokenHolderOne).swapExactTokensForETHSupportingFeeOnTransferTokens(ethers.parseUnits("100", 9), 1, [reflectTokenAddress, wethAddress], tokenHolderOne.getAddress(), Date.now() + 1000)
     expect(await reflectToken.balanceOf(tokenHolderOne.getAddress())).to.eq(ethers.parseUnits("0.0", 9))
 
 
@@ -150,6 +155,10 @@ describe("Liquidation", function () {
     await expect(reflectToken.connect(tokenHolderOne).reflect(tokenHolderOne.getAddress())).to.be.revertedWith('Cannot reflect, account holds over 1% of supply')
 
   });
+
+  it("trades properly", async function () {
+
+  })
   it("should never liquidiate LP", async function () {
     const [owner, tokenHolderOne, tokenHolderTwo, tokenHolderThree, tokenHolderFour] = await ethers.getSigners();
     const { reflectToken, tokenPair, weth, router, routerAddress, wethAddress, reflectTokenAddress } = await addInitialLiquidity(owner);
@@ -159,24 +168,36 @@ describe("Liquidation", function () {
     await weth.connect(owner).approve(routerAddress, ethers.parseUnits("10000000000000", 18))
 
     await router
-    .connect(owner)
-    .addLiquidity(
-      reflectTokenAddress,
-      wethAddress,
-      ethers.parseUnits("69420133780081.35", 9),
-      ethers.parseUnits("1", 18),
-      1,
-      1,
-      await owner.getAddress(),
-      Date.now() + 100000000,
-      { gasLimit: 20000000 }
-    );
+      .connect(owner)
+      .addLiquidity(
+        reflectTokenAddress,
+        wethAddress,
+        ethers.parseUnits("69420133780081.35", 9),
+        ethers.parseUnits(".1", 18),
+        1,
+        1,
+        await owner.getAddress(),
+        Date.now() + 100000000,
+        { gasLimit: 20000000 }
+      );
 
     console.log(await tokenPair.getReserves());
 
   })
 
 
+})
+
+describe("Presale", function () {
+  it("presales", async function () {
+    const [owner, tokenHolderOne, tokenHolderTwo, teamWallet, presaleOne, presaleTwo, presaleThree, presaleFour, presaleFive] = await ethers.getSigners();
+    const { reflectToken, factoryAddress, routerAddress, wethAddress } = await deployWithoutAddingLiquidity(owner);
+    const Presale = await ethers.getContractFactory("Presale");
+    const presale = await Presale.deploy(await reflectToken.getAddress(), 9, routerAddress, factoryAddress, await teamWallet.getAddress(), wethAddress, false, true);
+    console.log("presale address", await presale.getAddress())
+    await presale.connect(owner).wlMultipleAddresses([presaleOne.getAddress(), presaleTwo.getAddress(), presaleThree.getAddress(), presaleFour.getAddress(), presaleFive.getAddress()])
+    
+  })
 })
 async function getPair(address) {
   const pair = await ethers.getContractAt(
@@ -212,16 +233,34 @@ async function addInitialLiquidity(owner) {
       reflectTokenAddress,
       wethAddress,
       ethers.parseUnits("69420133780081.35", 9),
-      ethers.parseUnits("1", 18),
+      ethers.parseUnits("10", 18),
       1,
       1,
       await owner.getAddress(),
       Date.now() + 100000000,
       { gasLimit: 20000000 }
     );
-
+  await reflectToken.connect(owner).enableTrading();
   const tokenPair = await getPair(await factory.getPair(reflectTokenAddress, wethAddress))
   return { reflectToken, tokenPair, router, routerAddress, weth, wethAddress, reflectTokenAddress }
+}
+
+async function deployWithoutAddingLiquidity(owner) {
+  const Factory = await ethers.getContractFactory("UniswapV2Factory", owner);
+  const Router = await ethers.getContractFactory("UniswapV2Router02", owner);
+  const WETH = await ethers.getContractFactory("WETH", owner);
+  const weth = await WETH.deploy();
+  const factory = await Factory.deploy(owner.getAddress());
+  console.log('addresses: ', await weth.getAddress(), await factory.getAddress())
+  const router = await Router.deploy(await factory.getAddress(), await weth.getAddress());
+
+  const routerAddress = await router.getAddress();
+  const factoryAddress = await factory.getAddress();
+  const wethAddress = await weth.getAddress();
+
+  const ReflectToken = await ethers.getContractFactory("REFLECT");
+  const reflectToken = await ReflectToken.deploy(owner.getAddress(), routerAddress);
+  return { reflectToken, router, routerAddress, factoryAddress, weth, wethAddress }
 }
 
 async function addLiquidity() {

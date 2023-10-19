@@ -97,7 +97,7 @@ contract Presale is Ownable, Whitelist {
     }
 
     constructor(
-        IERC20 _tokenInstance, 
+        address _tokenAddress, 
         uint8 _tokenDecimals, 
         address _uniswapv2Router, 
         address _uniswapv2Factory,
@@ -122,7 +122,7 @@ contract Presale is Ownable, Whitelist {
         weth = _weth;
         burnTokens = _burnTokens;
         isWhitelist = _isWhitelist;
-        tokenInstance = _tokenInstance;
+        tokenInstance = IERC20(_tokenAddress);
         creatorWallet = address(payable(msg.sender));
         tokenDecimals =  _tokenDecimals;
         UniswapV2Router02 = IUniswapV2Router02(_uniswapv2Router);

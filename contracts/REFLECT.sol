@@ -49,10 +49,13 @@ contract REFLECT is Context, IERC20, Ownable {
     uint256 public liquidationThresholdTime = 1 days;
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
+    address public presale;
 
     bool public liquidationEnabled = false;
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
+    bool public tradingEnabled = false;
+
 
     uint256 private numTokensSellToAddToLiquidity = 10 * 10 ** 9;
 
@@ -349,6 +352,16 @@ contract REFLECT is Context, IERC20, Ownable {
         liquidationThresholdTime = time;
     }
 
+    function setPresaleAddress(address _presale) public onlyOwner() {
+        presale = _presale;
+        _isExcluded[presale] = true;
+        _isExcludedFromFee[presale] = true;
+    }
+
+    function enableTrading() public onlyOwner() {
+        tradingEnabled = true;
+    }
+
     receive() external payable {}
 
     function removeAllFee() private {
@@ -379,6 +392,9 @@ contract REFLECT is Context, IERC20, Ownable {
         address recipient,
         uint256 amount
     ) private {
+        if(!tradingEnabled) {
+            require(sender == owner() || sender == presale, "Trading is not yet enabled, once presale is finished it will open");
+        }
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");

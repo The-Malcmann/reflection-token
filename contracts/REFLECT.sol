@@ -30,13 +30,13 @@ contract REFLECT is Context, IERC20, Ownable {
     address[] private _excluded;
 
     uint256 private constant MAX = ~uint256(0);
-    uint256 private constant _tTotal = 6942013378008135 * 10 ** 9;
+    uint256 private constant _tTotal = 6942013378008135 * 10 ** 18;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
     string private _name = "FDIC";
     string private _symbol = "FDIC";
-    uint8 private _decimals = 9;
+    uint8 private _decimals = 18;
 
     uint256 public _taxFee = 2;
     uint256 private _previousTaxFee = _taxFee;
@@ -54,7 +54,7 @@ contract REFLECT is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
 
-    uint256 private numTokensSellToAddToLiquidity = 10 * 10 ** 9;
+    uint256 private numTokensSellToAddToLiquidity = 10 * 10 ** 18;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);

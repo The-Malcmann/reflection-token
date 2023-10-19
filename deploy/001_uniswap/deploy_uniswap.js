@@ -7,6 +7,7 @@ const func = async function (hre) {
 
     // const { deployer, multisig } = await getNamedAccounts();
     const deployer = await (await hre.ethers.getSigners())[0].getAddress()
+    const deployerSigner = (await hre.ethers.getSigners())[0]
     console.log(deployer)
 
     const signer = await hre.ethers.provider.getSigner(
@@ -46,7 +47,13 @@ const func = async function (hre) {
         factory: factory.address,
         router: router.address,
         weth: weth.address
-    } 
+    }
+
+    const chainId = await hre.getChainId()
+    if(chainId === '31337') {
+        const wethContract = await hre.ethers.getContractAt(require('../../artifacts/contracts/WETH.sol/WETH.json').abi, hre.addys.weth)
+        await wethContract.connect(deployerSigner).deposit({value: hre.ethers.parseUnits("1000.0", 18)})
+    }
 };
 
 func.tags = ["uniswap"];

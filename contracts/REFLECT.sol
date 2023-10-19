@@ -49,7 +49,6 @@ contract REFLECT is Context, IERC20, Ownable {
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
-    address public presale;
 
     bool public liquidationEnabled = false;
     bool inSwapAndLiquify;
@@ -218,12 +217,6 @@ contract REFLECT is Context, IERC20, Ownable {
             "new threshold must be larger than previous"
         );
         liquidationThresholdTime = time;
-    }
-
-    function setPresaleAddress(address _presale) external onlyOwner {
-        presale = _presale;
-        _isExcluded[presale] = true;
-        _isExcludedFromFee[presale] = true;
     }
 
     function enableTrading() external onlyOwner {
@@ -485,7 +478,7 @@ contract REFLECT is Context, IERC20, Ownable {
     ) private {
         if (!tradingEnabled) {
             require(
-                sender == owner() || sender == presale,
+                _isExcludedFromFee[sender] == true,
                 "Trading is not yet enabled, once presale is finished it will open"
             );
         }

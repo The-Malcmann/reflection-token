@@ -172,7 +172,7 @@ contract Presale is Ownable, Whitelist {
 
     /*
     * Initiates the arguments of the sale
-    @dev arguments must be pa   ssed in wei (amount*10**18)
+    @dev arguments must be passed in wei (amount*10**18)
     */
     function initSale(
         uint64 _startTime,
@@ -382,11 +382,12 @@ contract Presale is Ownable, Whitelist {
         if(isWhitelist){
             require(whitelists[_msgSender()], "User not Whitelisted.");
         }
-
+        require(tokenInstance.balanceOf(msg.sender) > 0, "Must hold token to participate in presale");
         require(_beneficiary != address(0), "Transfer to 0 address.");
         require(_amount != 0, "Wei Amount is 0");
         require(_amount >= pool.minBuy, "Min buy is not met.");
         require(_amount + ethContribution[_beneficiary] <= pool.maxBuy, "Max buy limit exceeded.");
+        require(_getUserTokens(_amount + ethContribution[_beneficiary]) <= tokenInstance.balanceOf(msg.sender), "Transaction would exceed maximum buy");
         require(ethRaised + _amount <= pool.hardCap, "HC Reached.");
         this;
     }

@@ -190,13 +190,29 @@ describe("Liquidation", function () {
 
 describe("Presale", function () {
   it("presales", async function () {
-    const [owner, tokenHolderOne, tokenHolderTwo, teamWallet, presaleOne, presaleTwo, presaleThree, presaleFour, presaleFive] = await ethers.getSigners();
+    const [owner, tokenHolderOne, tokenHolderTwo, teamWallet, presaleOne, presaleTwo, presaleThree, presaleFour, presaleFive, presaleSix, presaleSeven, presaleEight, presaleNine, presaleTen] = await ethers.getSigners();
     const { reflectToken, factoryAddress, routerAddress, wethAddress } = await deployWithoutAddingLiquidity(owner);
     const Presale = await ethers.getContractFactory("Presale");
-    const presale = await Presale.deploy(await reflectToken.getAddress(), 9, routerAddress, factoryAddress, await teamWallet.getAddress(), wethAddress, false, true);
+    const presale = await Presale.deploy(await reflectToken.getAddress(), 9, routerAddress, factoryAddress, await teamWallet.getAddress(), wethAddress, false, false);
     console.log("presale address", await presale.getAddress())
-    await presale.connect(owner).wlMultipleAddresses([presaleOne.getAddress(), presaleTwo.getAddress(), presaleThree.getAddress(), presaleFour.getAddress(), presaleFive.getAddress()])
+
+    //.01% of supply
+    await reflectToken.connect(owner).transfer(presaleOne, ethers.parseUnits("694201337800.8135"))
+    await reflectToken.connect(owner).transfer(presaleTwo, ethers.parseUnits("694201337800.8135"))
+    await reflectToken.connect(owner).transfer(presaleThree, ethers.parseUnits("694201337800.8135"))
+    await reflectToken.connect(owner).transfer(presaleFour, ethers.parseUnits("694201337800.8135"))
+    // .1% of supply
+    await reflectToken.connect(owner).transfer(presaleFive, ethers.parseUnits("6942013378008.135"))
+    await reflectToken.connect(owner).transfer(presaleSix, ethers.parseUnits("6942013378008.135"))
+    await reflectToken.connect(owner).transfer(presaleSeven, ethers.parseUnits("6942013378008.135"))
+    await reflectToken.connect(owner).transfer(presaleEight, ethers.parseUnits("6942013378008.135"))
+    //.5% of supply 
+    await reflectToken.connect(owner).transfer(presaleEight, ethers.parseUnits("34710066890040.675"))
+    await reflectToken.connect(owner).transfer(presaleNine, ethers.parseUnits("34710066890040.675"))
+    await reflectToken.connect(owner).transfer(presaleTen, ethers.parseUnits("34710066890040.675"))
+
     
+
   })
 })
 async function getPair(address) {

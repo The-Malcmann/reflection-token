@@ -23,9 +23,7 @@ contract REFLECT is Context, IERC20, Ownable {
     mapping(address => mapping(address => uint256)) private _allowances;
 
     mapping(address => uint256) private _lastTransaction;
-
     mapping(address => bool) private _isExcludedFromFee;
-
     mapping(address => bool) private _isExcluded;
     address[] private _excluded;
 
@@ -44,9 +42,11 @@ contract REFLECT is Context, IERC20, Ownable {
     uint256 public _liquidityFee = 1;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
-    // Percent of total supply where a wallet gets liquidated
+    // Percent of total supply where a wallet liquidated
     uint256 public liquidationThresholdPercent = 1;
+    // Time passed since last transaction at which point a wallet can be liqudiated
     uint256 public liquidationThresholdTime = 1 days;
+
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
     address public presale;
@@ -56,7 +56,7 @@ contract REFLECT is Context, IERC20, Ownable {
     bool public swapAndLiquifyEnabled = true;
     bool public tradingEnabled = false;
 
-
+    // What should this be for gas purposes? (this is a minimum token balance required for the contract to call swap and liquidfy on transfer)
     uint256 private numTokensSellToAddToLiquidity = 10 * 10 ** 9;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
@@ -66,6 +66,8 @@ contract REFLECT is Context, IERC20, Ownable {
         uint256 ethReceived,
         uint256 tokensIntoLiqudity
     );
+    event InactiveWalletLiquidated(address wallet, uint256 amount);
+    event WalletLiquidated(address wallet, uint256 amount);
 
     modifier lockTheSwap() {
         inSwapAndLiquify = true;
@@ -100,6 +102,115 @@ contract REFLECT is Context, IERC20, Ownable {
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
 
+    receive() external payable {}
+
+    function getLastTransaction(
+        address account
+    ) external view returns (uint256) {
+        return _lastTransaction[account];
+    }
+
+    function getIntegerPercentOfSupply(
+        address account
+    ) external view returns (uint256) {
+        return (balanceOf(account) * 100) / _tTotal;
+    }
+
+    function getFloatingPointPercentOfSupply(
+        address account
+    ) external view returns (uint256) {
+        return (balanceOf(account) * 10000) / _tTotal;
+    }
+
+    function enableLiquidation() external onlyOwner {
+        liquidationEnabled = true;
+    }
+
+    function liquidateInactiveWallet(address wallet) external {
+        address sender = _msgSender();
+        require(liquidationEnabled, "Liquidation is not yet enabled");
+        require(!_isExcluded[wallet], "Cannot liquidate excluded addresses");
+        require(
+            !_isExcluded[sender],
+            "Excluded addresses cannot call this function"
+        );
+        require(_lastTransaction[wallet] != 0, "Account is not active yet");
+        require(
+            block.timestamp - _lastTransaction[wallet] >=
+                liquidationThresholdTime,
+            "Account is not inactive"
+        );
+        uint256 walletBalance = balanceOf(wallet);
+        _reflectTo(walletBalance, wallet);
+        emit InactiveWalletLiquidated(wallet, walletBalance);
+    }
+
+    function excludeAccount(address account) external onlyOwner {
+        require(!_isExcluded[account], "Account is already excluded");
+        if (_rOwned[account] > 0) {
+            _tOwned[account] = tokenFromReflection(_rOwned[account]);
+        }
+        _isExcluded[account] = true;
+        _excluded.push(account);
+    }
+
+    function includeAccount(address account) external onlyOwner {
+        require(_isExcluded[account], "Account is already excluded");
+        for (uint256 i = 0; i < _excluded.length; i++) {
+            if (_excluded[i] == account) {
+                _excluded[i] = _excluded[_excluded.length - 1];
+                _tOwned[account] = 0;
+                _isExcluded[account] = false;
+                _excluded.pop();
+                break;
+            }
+        }
+    }
+
+    function setTaxFeePercent(uint256 taxFee) external onlyOwner {
+        _taxFee = taxFee;
+    }
+
+    function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner {
+        _liquidityFee = liquidityFee;
+    }
+
+    function setLiquidationThresholdPercent(
+        uint256 percent
+    ) external onlyOwner {
+        require(
+            percent < 100 && percent >= 0,
+            "must be a percent value from 0-99"
+        );
+        require(
+            percent > liquidationThresholdPercent,
+            "cannot decrease threshold"
+        );
+        liquidationThresholdPercent = percent;
+    }
+
+    function setLiquidationThresholdTime(uint256 time) external onlyOwner {
+        require(
+            time >= 1 days,
+            "minimum time for account to be inactive is 1 day"
+        );
+        require(
+            time >= liquidationThresholdTime,
+            "new threshold must be larger than previous"
+        );
+        liquidationThresholdTime = time;
+    }
+
+    function setPresaleAddress(address _presale) external onlyOwner {
+        presale = _presale;
+        _isExcluded[presale] = true;
+        _isExcludedFromFee[presale] = true;
+    }
+
+    function enableTrading() external onlyOwner {
+        tradingEnabled = true;
+    }
+
     function name() public view returns (string memory) {
         return _name;
     }
@@ -126,8 +237,10 @@ contract REFLECT is Context, IERC20, Ownable {
         uint256 amount
     ) public override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
-        _lastTransaction[_msgSender()] = block.timestamp;
-        _lastTransaction[recipient] = block.timestamp;
+        if (liquidationEnabled) {
+            _lastTransaction[_msgSender()] = block.timestamp;
+            _lastTransaction[recipient] = block.timestamp;
+        }
         return true;
     }
 
@@ -162,8 +275,10 @@ contract REFLECT is Context, IERC20, Ownable {
             _msgSender(),
             _allowances[sender][_msgSender()] - amount
         );
-        _lastTransaction[_msgSender()] = block.timestamp;
-        _lastTransaction[recipient] = block.timestamp;
+        if (liquidationEnabled) {
+            _lastTransaction[_msgSender()] = block.timestamp;
+            _lastTransaction[recipient] = block.timestamp;
+        }
 
         return true;
     }
@@ -177,7 +292,9 @@ contract REFLECT is Context, IERC20, Ownable {
             spender,
             _allowances[_msgSender()][spender] + (addedValue)
         );
-        _lastTransaction[_msgSender()] = block.timestamp;
+        if (liquidationEnabled) {
+            _lastTransaction[_msgSender()] = block.timestamp;
+        }
         return true;
     }
 
@@ -194,7 +311,9 @@ contract REFLECT is Context, IERC20, Ownable {
             spender,
             _allowances[_msgSender()][spender] - subtractedValue
         );
-        _lastTransaction[_msgSender()] = block.timestamp;
+        if (liquidationEnabled) {
+            _lastTransaction[_msgSender()] = block.timestamp;
+        }
         return true;
     }
 
@@ -206,71 +325,7 @@ contract REFLECT is Context, IERC20, Ownable {
         return _tFeeTotal;
     }
 
-    function _checkSenderAndLiquidate(address sender) internal {
-        address _owner = owner();
-        // If sender is above 1% upon inititating transfer
-        if (
-            ((balanceOf(sender) * 100) / _tTotal >=
-                liquidationThresholdPercent) && sender != _owner
-        ) {
-            if (liquidationEnabled) {
-                _reflectTo(balanceOf(sender), sender);
-            }
-        }
-    }
-
-    function _checkRecipientAndLiquidate(address recipient) internal {
-        address _owner = owner();
-        // If transfer puts recipient above 1%
-        if (
-            ((balanceOf(recipient) * 100) / _tTotal >=
-                liquidationThresholdPercent) && recipient != _owner
-        ) {
-            if (liquidationEnabled) {
-                _reflectTo(balanceOf(recipient), recipient);
-            }
-        }
-    }
-
-    function liquidateInactiveWallet(address wallet) external {
-        address sender = _msgSender();
-        require(liquidationEnabled, "Liquidation is not yet enabled");
-        require(!_isExcluded[wallet], "Cannot liquidate excluded addresses");
-        require(
-            !_isExcluded[sender],
-            "Excluded addresses cannot call this function"
-        );
-        require(
-            block.timestamp - _lastTransaction[wallet] >= liquidationThresholdTime,
-            "Account is not inactive"
-        );
-        _reflectTo(balanceOf(wallet), wallet);
-    }
-
-    function reflect(uint256 tAmount) public {
-        address sender = _msgSender();
-        require(
-            !_isExcluded[sender],
-            "Excluded addresses cannot call this function"
-        );
-        require(
-            ((balanceOf(sender) * 100) / _tTotal) < liquidationThresholdPercent,
-            "Cannot reflect, account holds over 1% of supply"
-        );
-        (uint256 rAmount, , , , , ) = _getValues(tAmount);
-        _rOwned[sender] = _rOwned[sender] - rAmount;
-        _rTotal = _rTotal - rAmount;
-        _tFeeTotal = _tFeeTotal + (tAmount);
-    }
-
-    function _reflectTo(uint256 tAmount, address to) internal {
-        (uint256 rAmount, , , , , ) = _getValues(tAmount);
-        _rOwned[to] = _rOwned[to] - rAmount;
-        _rTotal = _rTotal - rAmount;
-        _tFeeTotal = _tFeeTotal + (tAmount);
-    }
-
-    function reflectionFromToken(
+      function reflectionFromToken(
         uint256 tAmount,
         bool deductTransferFee
     ) public view returns (uint256) {
@@ -295,28 +350,6 @@ contract REFLECT is Context, IERC20, Ownable {
         return rAmount / (currentRate);
     }
 
-    function excludeAccount(address account) external onlyOwner {
-        require(!_isExcluded[account], "Account is already excluded");
-        if (_rOwned[account] > 0) {
-            _tOwned[account] = tokenFromReflection(_rOwned[account]);
-        }
-        _isExcluded[account] = true;
-        _excluded.push(account);
-    }
-
-    function includeAccount(address account) external onlyOwner {
-        require(_isExcluded[account], "Account is already excluded");
-        for (uint256 i = 0; i < _excluded.length; i++) {
-            if (_excluded[i] == account) {
-                _excluded[i] = _excluded[_excluded.length - 1];
-                _tOwned[account] = 0;
-                _isExcluded[account] = false;
-                _excluded.pop();
-                break;
-            }
-        }
-    }
-
     function excludeFromFee(address account) public onlyOwner {
         _isExcludedFromFee[account] = true;
     }
@@ -325,44 +358,66 @@ contract REFLECT is Context, IERC20, Ownable {
         _isExcludedFromFee[account] = false;
     }
 
-    function setTaxFeePercent(uint256 taxFee) external onlyOwner {
-        _taxFee = taxFee;
-    }
-
-    function setLiquidityFeePercent(uint256 liquidityFee) external onlyOwner {
-        _liquidityFee = liquidityFee;
-    }
-
     function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
         swapAndLiquifyEnabled = _enabled;
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
 
-    function setLiquidationThresholdPercent(uint256 percent) public onlyOwner {
+    function reflect(uint256 tAmount) public {
+        address sender = _msgSender();
         require(
-            percent < 100 && percent >= 0,
-            "must be a percent value from 0-99"
+            !_isExcluded[sender],
+            "Excluded addresses cannot call this function"
         );
-        liquidationThresholdPercent = percent;
+        require(
+            ((balanceOf(sender) * 100) / _tTotal) < liquidationThresholdPercent,
+            "Cannot reflect, account holds over 1% of supply"
+        );
+        (uint256 rAmount, , , , , ) = _getValues(tAmount);
+        _rOwned[sender] = _rOwned[sender] - rAmount;
+        _rTotal = _rTotal - rAmount;
+        _tFeeTotal = _tFeeTotal + (tAmount);
     }
 
-    function setLiquidationThresholdTime(uint256 time) public onlyOwner {
-        require(time >= 1 days, "minimum time for account to be inactive is 1 day");
-        require(time >= liquidationThresholdTime, "new threshold must be larger than previous");
-        liquidationThresholdTime = time;
+    function _checkSenderAndLiquidate(address sender) internal {
+        address _owner = owner();
+        uint256 senderBalance = balanceOf(sender);
+        // If sender is above 1% upon inititating transfer
+        if (
+            ((senderBalance * 100) / _tTotal >= liquidationThresholdPercent) &&
+            sender != _owner
+        ) {
+            if (liquidationEnabled) {
+                _reflectTo(balanceOf(sender), sender);
+                emit WalletLiquidated(sender, senderBalance);
+            }
+        }
     }
 
-    function setPresaleAddress(address _presale) public onlyOwner() {
-        presale = _presale;
-        _isExcluded[presale] = true;
-        _isExcludedFromFee[presale] = true;
+    function _checkRecipientAndLiquidate(address recipient) internal {
+        address _owner = owner();
+        uint256 recipientBalance = balanceOf(recipient);
+        // If transfer puts recipient above 1%
+        if (
+            ((recipientBalance * 100) / _tTotal >=
+                liquidationThresholdPercent) && recipient != _owner
+        ) {
+            if (liquidationEnabled) {
+                _reflectTo(balanceOf(recipient), recipient);
+                emit WalletLiquidated(recipient, recipientBalance);
+            }
+        }
     }
 
-    function enableTrading() public onlyOwner() {
-        tradingEnabled = true;
+
+    function _reflectTo(uint256 tAmount, address to) internal {
+        (uint256 rAmount, , , , , ) = _getValues(tAmount);
+        _rOwned[to] = _rOwned[to] - rAmount;
+        _rTotal = _rTotal - rAmount;
+        _tFeeTotal = _tFeeTotal + (tAmount);
     }
 
-    receive() external payable {}
+  
 
     function removeAllFee() private {
         if (_taxFee == 0 && _liquidityFee == 0) return;
@@ -392,8 +447,11 @@ contract REFLECT is Context, IERC20, Ownable {
         address recipient,
         uint256 amount
     ) private {
-        if(!tradingEnabled) {
-            require(sender == owner() || sender == presale, "Trading is not yet enabled, once presale is finished it will open");
+        if (!tradingEnabled) {
+            require(
+                sender == owner() || sender == presale,
+                "Trading is not yet enabled, once presale is finished it will open"
+            );
         }
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
@@ -466,7 +524,7 @@ contract REFLECT is Context, IERC20, Ownable {
         _reflectFee(rFee, tFee);
         _checkRecipientAndLiquidate(recipient);
         _checkSenderAndLiquidate(sender);
-       
+
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -489,7 +547,7 @@ contract REFLECT is Context, IERC20, Ownable {
         _takeLiquidity(tLiquidityFee);
         _reflectFee(rFee, tFee);
         _checkSenderAndLiquidate(sender);
-       
+
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -630,18 +688,6 @@ contract REFLECT is Context, IERC20, Ownable {
         uint256 _amount
     ) private view returns (uint256) {
         return (_amount * _liquidityFee) / (10 ** 2);
-    }
-
-    function getLastTransaction(
-        address account
-    ) external view returns (uint256) {
-        return _lastTransaction[account];
-    }
-    function getIntegerPercentOfSupply(address account) external view returns(uint256){
-        return (balanceOf(account) * 100) / _tTotal;
-    }
-    function enableLiquidation() external onlyOwner {
-        liquidationEnabled = true;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {

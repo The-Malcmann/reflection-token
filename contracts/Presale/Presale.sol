@@ -148,13 +148,7 @@ contract Presale is Ownable {
         
         isInit = true;
     }
-    function getTokensFromEth(uint256 _amount) external view returns (uint256){
-         return _amount * (pool.saleRate) / (10 ** 18) / (10**(18-tokenDecimals));
-    }
-
-    function getEthFromTokens(uint256 _tokenAmount) external view returns (uint256) {
-        return _tokenAmount / pool.saleRate * (10 ** 18);
-    }
+   
     /*
     * Once called the owner deposits tokens into pool
     */
@@ -181,13 +175,14 @@ contract Presale is Ownable {
 
         //get the used amount of tokens
         uint256 tokensForSale = ethRaised * (pool.saleRate) / (10**18) / (10**(18-tokenDecimals));
-        
+        isFinish = true;
         //transfer Eth to owner wallet for initial LP
         payable(creatorWallet).transfer(ethRaised);
 
         //If HC is not reached, burn or refund the remainder
         if (ethRaised < pool.hardCap) {
             uint256 remainder = _getTokenDeposit() - (tokensForSale);
+            console.log('remainder', remainder);
             if(burnTokens == true){
                 require(tokenInstance.transfer(
                     0x000000000000000000000000000000000000dEaD, 
@@ -258,7 +253,16 @@ contract Presale is Ownable {
             emit Withdraw(msg.sender, tokenDeposit);
         }
     }
+     function getTokensFromEth(uint256 _amount) public view returns (uint256){
+         return _amount * (pool.saleRate) / (10 ** 18) / (10**(18-tokenDecimals));
+    }
 
+    function getEthFromTokens(uint256 _tokenAmount) public view returns (uint256) {
+        return _tokenAmount * (10 ** 18)/ pool.saleRate;
+    }
+    function isSaleActive() public {
+        bool isActive = block.timestamp >= pool.startTime && block.timestamp <= pool.endTime;
+    }
     /*
     * If requirements are passed, updates user"s token balance based on their eth contribution
     */
@@ -293,7 +297,7 @@ contract Presale is Ownable {
         return _amount * (pool.saleRate) / (10 ** 18) / (10**(18-tokenDecimals));
     }
     
-    function _getTokenDeposit() internal view returns (uint256){
+    function _getTokenDeposit() public view returns (uint256){
         uint256 tokensForSale = pool.hardCap * pool.saleRate / (10**18) / (10**(18-tokenDecimals));
         return(tokensForSale);
     }

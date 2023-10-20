@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
-const { days } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration");
+const { days, minutes } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time/duration");
 
 describe("Token contract", function () {
   it("Deployment should assign the total supply of tokens to the owner", async function () {
@@ -223,28 +223,80 @@ describe("Presale", function () {
     await reflectToken.connect(owner).transfer(presaleTwo, ethers.parseEther("694201337800.8135"))
     await reflectToken.connect(owner).transfer(presaleThree, ethers.parseEther("694201337800.8135"))
     await reflectToken.connect(owner).transfer(presaleFour, ethers.parseEther("694201337800.8135"))
+
+    //cant transfer yet
+    expect(reflectToken.connect(presaleOne).transfer(presaleTwo)).to.be.revertedWith("Trading is not yet enabled, once presale is finished it will open")
+
     // .1% of supply each
     await reflectToken.connect(owner).transfer(presaleFive, ethers.parseEther("6942013378008.135"))
     await reflectToken.connect(owner).transfer(presaleSix, ethers.parseEther("6942013378008.135"))
     await reflectToken.connect(owner).transfer(presaleSeven, ethers.parseEther("6942013378008.135"))
     await reflectToken.connect(owner).transfer(presaleEight, ethers.parseEther("6942013378008.135"))
     //.5% of supply each
-    await reflectToken.connect(owner).transfer(presaleEight, ethers.parseEther("34710066890040.675"))
     await reflectToken.connect(owner).transfer(presaleNine, ethers.parseEther("34710066890040.675"))
     await reflectToken.connect(owner).transfer(presaleTen, ethers.parseEther("34710066890040.675"))
 
-    const totalSupply = 6942013378008135
     //10%
     const tokensSale = 694201337800813.5
-    const tokensOwnd = 6247812040207321.5
+
 
     const saleRate = tokensSale/32
 
     await reflectToken.connect(owner).approve(await presale.getAddress(), ethers.parseEther(tokensSale.toString()));
 
-    await presale.connect(owner).initSale(Date.now(), Date.now() + days(1), ethers.parseEther(saleRate.toString()), ethers.parseEther("32"));
+    await presale.connect(owner).initSale(await helpers.time.latest() + 1, await helpers.time.latest() + days(1), ethers.parseEther(saleRate.toString()), ethers.parseEther("32"));
     await presale.connect(owner).deposit();
 
+    const plebMaxBuy = await presale.getEthFromTokens(await reflectToken.balanceOf(presaleOne.getAddress()))
+    const normieMaxBuy = await presale.getEthFromTokens(await reflectToken.balanceOf(presaleFive.getAddress()))
+    const ogMaxBuy = await presale.getEthFromTokens(await reflectToken.balanceOf(presaleEight.getAddress()))
+    console.log('get eth from tokens presaleOne', await presale.getEthFromTokens(await reflectToken.balanceOf(presaleOne.getAddress())))
+    // await helpers.time.increase(minutes(1));
+
+    await presale.connect(presaleOne).buyTokens(presaleOne.getAddress(), {value: plebMaxBuy})
+    await presale.connect(presaleTwo).buyTokens(presaleTwo.getAddress(), {value: plebMaxBuy})
+    await presale.connect(presaleThree).buyTokens(presaleThree.getAddress(), {value: plebMaxBuy})
+    await presale.connect(presaleFour).buyTokens(presaleFour.getAddress(), {value: plebMaxBuy})
+    
+    await presale.connect(presaleFive).buyTokens(presaleFive.getAddress(), {value: normieMaxBuy})
+    await presale.connect(presaleSix).buyTokens(presaleSix.getAddress(), {value: normieMaxBuy})
+    await presale.connect(presaleSeven).buyTokens(presaleSeven.getAddress(), {value: normieMaxBuy})
+    await presale.connect(presaleEight).buyTokens(presaleEight.getAddress(), {value: normieMaxBuy})
+    
+    await presale.connect(presaleNine).buyTokens(presaleNine.getAddress(), {value: ogMaxBuy})
+    await presale.connect(presaleTen).buyTokens(presaleTen.getAddress(), {value: ogMaxBuy})
+
+    await helpers.time.increase(days(1) + 1)
+
+    const ownerEthBalanceBefore = await ethers.provider.getBalance(owner.getAddress())
+    console.log('eth balance of owner before finish sale', await ethers.provider.getBalance(owner.getAddress()))
+    console.log('eth balance of presle before finish sale', await ethers.provider.getBalance(presale.getAddress()))
+    console.log('token balance of presale before finish transfer', await reflectToken.balanceOf(presale.getAddress()))
+    console.log('getTokenDeposit():', await presale._getTokenDeposit())
+    await presale.connect(owner).finishSale()
+    console.log('token balance of presale after finish transfer', await reflectToken.balanceOf(presale.getAddress()))
+    console.log('eth balance of owner after finish sale', await ethers.provider.getBalance(owner.getAddress()))
+    
+  
+    const expectedEth = await presale.getEthFromTokens(ethers.parseEther(((ethers.formatEther(plebMaxBuy) * 4) + (ethers.formatEther(normieMaxBuy) *4) + (ethers.formatEther(ogMaxBuy)*2))).toString())
+    const ownerEthBalanceAfter = await ethers.provider.getBalance(owner.getAddress())
+    // expect(ethers.formatEther(ownerEthBalanceAfter)).to.eq(ethers.formatEther(ownerEthBalanceBefore) + ethers.formatEther(expectedEth))
+
+    await helpers.time.increase(minutes(10));
+    await presale.connect(presaleOne).claimTokens()
+    await presale.connect(presaleTwo).claimTokens()
+    await presale.connect(presaleThree).claimTokens()
+    await presale.connect(presaleFour).claimTokens()
+    
+    await presale.connect(presaleFive).claimTokens()
+    await presale.connect(presaleSix).claimTokens()
+    await presale.connect(presaleSeven).claimTokens()
+    await presale.connect(presaleEight).claimTokens()
+    
+    await presale.connect(presaleNine).claimTokens()
+    await presale.connect(presaleTen).claimTokens()
+
+    expect(await reflectToken.balanceOf(presale.getAddress())).to.eq(ethers.parseEther("0.0"))
   })
 })
 async function getPair(address) {

@@ -5,7 +5,6 @@
 
 pragma solidity ^0.8.20;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -15,9 +14,6 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 
 contract REFLECT is Context, IERC20, Ownable {
-    using Math for uint256;
-    using Address for address;
-
     mapping(address => uint256) private _rOwned;
     mapping(address => uint256) private _tOwned;
     mapping(address => mapping(address => uint256)) private _allowances;
@@ -55,7 +51,7 @@ contract REFLECT is Context, IERC20, Ownable {
     bool public swapAndLiquifyEnabled = true;
     bool public tradingEnabled = false;
 
-    // .05% of total supply 
+    // .05% of total supply
     uint256 private numTokensSellToAddToLiquidity = 3471006689004 * 10 ** 18;
 
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
@@ -77,7 +73,7 @@ contract REFLECT is Context, IERC20, Ownable {
     constructor(
         address _initialOwner,
         address _uniswapV2Router
-    ) IERC20() Ownable(_initialOwner) {
+    ) Ownable(_initialOwner) {
         _rOwned[_msgSender()] = _rTotal;
 
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -103,28 +99,12 @@ contract REFLECT is Context, IERC20, Ownable {
 
     receive() external payable {}
 
-    function getLastTransaction(
-        address account
-    ) external view returns (uint256) {
-        return _lastTransaction[account];
-    }
-
-    function getIntegerPercentOfSupply(
-        address account
-    ) external view returns (uint256) {
-        return (balanceOf(account) * 100) / _tTotal;
-    }
-
-    function getFloatingPointPercentOfSupply(
-        address account
-    ) external view returns (uint256) {
-        return (balanceOf(account) * 10000) / _tTotal;
-    }
-
-    function enableLiquidation(address[] calldata airdropAddresses) external onlyOwner {
+    function enableLiquidation(
+        address[] calldata airdropAddresses
+    ) external onlyOwner {
         require(!liquidationEnabled, "liquidation has already been enabled");
         liquidationEnabled = true;
-        for(uint i = 0; i < airdropAddresses.length; i++) {
+        for (uint i = 0; i < airdropAddresses.length; i++) {
             _lastTransaction[airdropAddresses[i]] = block.timestamp;
         }
     }
@@ -132,7 +112,10 @@ contract REFLECT is Context, IERC20, Ownable {
     function liquidateInactiveWallet(address wallet) external {
         address sender = _msgSender();
         require(liquidationEnabled, "Liquidation is not yet enabled");
-        require(!_isExcluded[wallet] && wallet != owner(), "Cannot liquidate excluded addresses");
+        require(
+            !_isExcluded[wallet] && wallet != owner(),
+            "Cannot liquidate excluded addresses"
+        );
         require(
             !_isExcluded[sender],
             "Excluded addresses cannot call this function"
@@ -156,9 +139,11 @@ contract REFLECT is Context, IERC20, Ownable {
             !_isExcluded[sender],
             "Excluded addresses cannot call this function"
         );
-        require((balanceOf(wallet) * 100) / _tTotal >=
-                liquidationThresholdPercent, "Wallet does not hold enough percentage of total supply");
-         uint256 walletBalance = balanceOf(wallet);
+        require(
+            (balanceOf(wallet) * 100) / _tTotal >= liquidationThresholdPercent,
+            "Wallet does not hold enough percentage of total supply"
+        );
+        uint256 walletBalance = balanceOf(wallet);
         _reflectTo(sender, walletBalance, wallet);
         emit WalletLiquidated(wallet, walletBalance);
     }
@@ -223,6 +208,22 @@ contract REFLECT is Context, IERC20, Ownable {
         tradingEnabled = true;
     }
 
+    function getLastTransaction(address account) public view returns (uint256) {
+        return _lastTransaction[account];
+    }
+
+    function getIntegerPercentOfSupply(
+        address account
+    ) public view returns (uint256) {
+        return (balanceOf(account) * 100) / _tTotal;
+    }
+
+    function getFloatingPointPercentOfSupply(
+        address account
+    ) public view returns (uint256) {
+        return (balanceOf(account) * 10000) / _tTotal;
+    }
+
     function name() public view returns (string memory) {
         return _name;
     }
@@ -235,7 +236,7 @@ contract REFLECT is Context, IERC20, Ownable {
         return _decimals;
     }
 
-    function totalSupply() public pure override returns (uint256) {
+    function totalSupply() public view override returns (uint256) {
         return _tTotal;
     }
 
@@ -268,7 +269,9 @@ contract REFLECT is Context, IERC20, Ownable {
         uint256 amount
     ) public override returns (bool) {
         _approve(_msgSender(), spender, amount);
-        _lastTransaction[_msgSender()] = block.timestamp;
+        if (liquidationEnabled) {
+            _lastTransaction[_msgSender()] = block.timestamp;
+        }
         return true;
     }
 
@@ -337,7 +340,7 @@ contract REFLECT is Context, IERC20, Ownable {
         return _tFeeTotal;
     }
 
-      function reflectionFromToken(
+    function reflectionFromToken(
         uint256 tAmount,
         bool deductTransferFee
     ) public view returns (uint256) {
@@ -400,7 +403,7 @@ contract REFLECT is Context, IERC20, Ownable {
             sender != _owner
         ) {
             if (liquidationEnabled) {
-                _reflectTo(address(this), balanceOf(sender), sender);
+                _reflectTo(address(this), senderBalance, sender);
                 emit WalletLiquidated(sender, senderBalance);
             }
         }
@@ -415,38 +418,35 @@ contract REFLECT is Context, IERC20, Ownable {
                 liquidationThresholdPercent) && recipient != _owner
         ) {
             if (liquidationEnabled) {
-                _reflectTo(address(this), balanceOf(recipient), recipient);
+                _reflectTo(address(this), recipientBalance, recipient);
                 emit WalletLiquidated(recipient, recipientBalance);
             }
         }
     }
 
-
     function _reflectTo(address sender, uint256 tAmount, address to) internal {
         (uint256 rAmount, , , , , ) = _getValues(tAmount);
-        console.log("SENDER", sender);
-        console.log("THIS ADDRESS", address(this));
         // 5% bounty fee to whoever called it. If it's the contract, the tokens are kept for liquidity
-        uint256 rFee = rAmount * 5 / 100;
+        uint256 rFee = (rAmount * 5) / 100;
+        uint256 tFee = (tAmount * 5) / 100;
         uint256 rReflectionAmount = rAmount - rFee;
-        console.log("rAmount, rFee, rReflectionAmount", rAmount, rFee, rReflectionAmount);
-        require(rFee + rReflectionAmount == rAmount, "rfee and rReflection do not sum to rAmount");
+        require(
+            rFee + rReflectionAmount == rAmount,
+            "rfee and rReflection do not sum to rAmount"
+        );
         // Liquidate wallet
         _rOwned[to] = _rOwned[to] - rAmount;
-        // Give function caller their bounty if sender is excluded, it is this contract 
-        if(sender == address(this)) {
-            uint256 tLiquidity = tAmount * 5 / 100;
-            _takeLiquidity(tLiquidity);
+        // Give function caller their bounty if sender is excluded, it is this contract
+        if (sender == address(this)) {
+            _takeLiquidity(tFee);
         } else {
-
             _rOwned[sender] = _rOwned[sender] + rFee;
+            emit Transfer(to, sender, tFee);
         }
         //Reflect the rest
         _rTotal = _rTotal - rReflectionAmount;
         _tFeeTotal = _tFeeTotal + (tAmount);
     }
-
-  
 
     function removeAllFee() private {
         if (_taxFee == 0 && _liquidityFee == 0) return;
@@ -551,8 +551,8 @@ contract REFLECT is Context, IERC20, Ownable {
         _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);
         _takeLiquidity(tLiquidityFee);
         _reflectFee(rFee, tFee);
-        _checkRecipientAndLiquidate(recipient);
         _checkSenderAndLiquidate(sender);
+        _checkRecipientAndLiquidate(recipient);
 
         emit Transfer(sender, recipient, tTransferAmount);
     }
@@ -574,8 +574,8 @@ contract REFLECT is Context, IERC20, Ownable {
         _tOwned[recipient] = _tOwned[recipient] + (tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient] + (rTransferAmount);
         _takeLiquidity(tLiquidityFee);
-        _reflectFee(rFee, tFee);
         _checkSenderAndLiquidate(sender);
+        _reflectFee(rFee, tFee);
 
         emit Transfer(sender, recipient, tTransferAmount);
     }
@@ -735,8 +735,6 @@ contract REFLECT is Context, IERC20, Ownable {
 
         // how much ETH did we just swap into?
         uint256 newBalance = address(this).balance - initialBalance;
-        console.log("ETH Balance to add", newBalance);
-        console.log("fdic to add", otherHalf);
         // add liquidity to uniswap
         addLiquidity(otherHalf, newBalance);
 

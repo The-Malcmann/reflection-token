@@ -12,7 +12,8 @@ const func = async function (hre) {
     log: true,
     from: deployer,
     args: [deployer, hre.addys.router],
-    gasPrice: hre.ethers.parseUnits('20', 'gwei')
+    gasPrice: hre.ethers.parseUnits('20', 'gwei'),
+    gas: 5526215
   };
 
   const FDIC = await deploy(

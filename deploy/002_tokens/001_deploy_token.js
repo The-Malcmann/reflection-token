@@ -43,5 +43,5 @@ console.log('DEPLOYER', namedAccounts)
     console.log(chainId)
 };
 
-func.tags = ["token"];
+func.tags = ["tokenx"];
 module.exports = func

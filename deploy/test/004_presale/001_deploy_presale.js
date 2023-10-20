@@ -29,6 +29,7 @@ const func = async function (hre) {
 
 
     const saleRate = tokensSale/32
+    console.log('SALE RATE', saleRate)
     console.log(await helpers.time.latest(), await helpers.time.latest() + minutes(10), hre.ethers.parseEther(saleRate.toString()), hre.ethers.parseEther('32'))
     await presale.connect(signer).initSale(await helpers.time.latest() + 1, await helpers.time.latest() + minutes(10), hre.ethers.parseEther(saleRate.toString()), hre.ethers.parseEther('32'))
     await presale.connect(signer).deposit()

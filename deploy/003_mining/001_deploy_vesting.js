@@ -49,5 +49,5 @@ const func = async function (hre) {
     // }
 };
 
-func.tags = ["vesting"];
+func.tags = ["vestingx"];
 module.exports = func;

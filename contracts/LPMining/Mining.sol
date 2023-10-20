@@ -55,7 +55,7 @@ contract Mining is Ownable {
         fdicAddress = _fdicAddr;
         wethAddress = _wethAddr;
         vestingContractAddress = _vestingContractAddress;
-        discount = 100; // 1% discount
+        discount = 10000; // 100% discount
         MAX_LP = ~uint256(0);
         multisig = _multisig;
         pair = IUniswapV2Pair(_pairAddr);
@@ -154,7 +154,7 @@ contract Mining is Ownable {
             msg.sender,
             block.timestamp,
             0,
-            3 days,
+            90 days,
             1 seconds, // linear vest
             false,
             fdicPayout

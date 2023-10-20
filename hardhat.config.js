@@ -20,7 +20,11 @@ module.exports = {
       {
         version: "0.8.9",
         settings: {}
-      }
+      },
+      {
+        version: "0.6.2",
+        settings: {}
+      },
     ],
     overrides: {
       "contracts/LPMining/TokenVestingBase.sol": {
@@ -35,6 +39,9 @@ module.exports = {
       },
       "contracts/LPMining/PriceOracle.sol": {
         version: "0.8.9"
+      },
+      "contracts/LPMining/Farm.sol": {
+        version: "0.6.2"
       },
     },
     settings: {

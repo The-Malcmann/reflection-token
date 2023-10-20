@@ -285,7 +285,7 @@ contract Presale is Ownable {
         require(tokenInstance.balanceOf(msg.sender) > 0, "Must hold token to participate in presale");
         require(_beneficiary != address(0), "Transfer to 0 address.");
         require(_amount != 0, "Wei Amount is 0");
-        require(_getUserTokens(_amount + ethContribution[_beneficiary]) <= tokenInstance.balanceOf(msg.sender), "Can't buy more tokens than you were airdropped");
+        require(_getUserTokens(_amount + ethContribution[_beneficiary]) <= tokenInstance.balanceOf(msg.sender), "Can't buy more tokens than were airdropped to account");
         require(ethRaised + _amount <= pool.hardCap, "HC Reached.");
         this;
     }

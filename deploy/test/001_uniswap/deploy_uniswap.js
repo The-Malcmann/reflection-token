@@ -49,5 +49,5 @@ const func = async function (hre) {
     } 
 };
 
-func.tags = ["uniswap"];
+func.tags = ["uniswap-test"];
 module.exports = func

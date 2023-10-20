@@ -15,7 +15,7 @@ const func = async function (hre) {
   // console.log("ORACLE", oracle.address);
   // const TokenVestingBase = await hre.ethers.getContract("TokenVestingBase");
   const gasPriceGwei = hre.ethers.parseUnits("50", "gwei");
-  const TokenVestingBase = await hre.ethers.getContractAt(require('../../artifacts/contracts/LPMining/TokenVestingBase.sol/TokenVestingBase.json').abi, hre.addys.vesting)
+  const TokenVestingBase = await hre.ethers.getContractAt(require('../../../artifacts/contracts/LPMining/TokenVestingBase.sol/TokenVestingBase.json').abi, hre.addys.vesting)
   const config = {
     log: true,
     from: deployer,

@@ -35,6 +35,13 @@ module.exports = {
         enabled: true,
         runs: 1000,
       }
+    },
+  },
+  networks: {
+    hardhat: {
+      mining: {
+        auto: true
+      }
     }
   },
   allowUnlimitedContractSize: true,

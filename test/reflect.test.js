@@ -330,7 +330,7 @@ async function addInitialLiquidity(owner) {
   const routerAddress = await router.getAddress();
   const wethAddress = await weth.getAddress();
 
-  const ReflectToken = await ethers.getContractFactory("REFLECT");
+  const ReflectToken = await ethers.getContractFactory("FDIC");
   const reflectToken = await ReflectToken.deploy(owner.getAddress(), routerAddress);
   const reflectTokenAddress = await reflectToken.getAddress();
 
@@ -369,7 +369,7 @@ async function deployWithoutAddingLiquidity(owner) {
   const factoryAddress = await factory.getAddress();
   const wethAddress = await weth.getAddress();
 
-  const ReflectToken = await ethers.getContractFactory("REFLECT");
+  const ReflectToken = await ethers.getContractFactory("FDIC");
   const reflectToken = await ReflectToken.deploy(owner.getAddress(), routerAddress);
   return { reflectToken, router, routerAddress, factoryAddress, weth, wethAddress }
 }

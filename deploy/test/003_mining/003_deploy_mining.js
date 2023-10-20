@@ -26,7 +26,6 @@ const func = async function (hre) {
       hre.addys.weth,
       multisig,
       hre.addys.vesting,
-      hre.addys.oracle,
       hre.addys.pair,
     ],
   };

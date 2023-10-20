@@ -260,8 +260,8 @@ contract Presale is Ownable {
     function getEthFromTokens(uint256 _tokenAmount) public view returns (uint256) {
         return _tokenAmount * (10 ** 18)/ pool.saleRate;
     }
-    function isSaleActive() public {
-        bool isActive = block.timestamp >= pool.startTime && block.timestamp <= pool.endTime;
+    function isSaleActive() public view returns (bool) {
+        return block.timestamp >= pool.startTime && block.timestamp <= pool.endTime;
     }
     /*
     * If requirements are passed, updates user"s token balance based on their eth contribution

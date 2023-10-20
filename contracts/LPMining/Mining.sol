@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../Uniswap/interfaces/IUniswapV2Pair.sol";
 import "../Uniswap/libraries/UniswapV2Library.sol";
 import "./TokenVestingBase.sol";
-import "./interfaces/IPriceOracle.sol";
 import "hardhat/console.sol";
 
 contract Mining is Ownable {
@@ -31,8 +30,6 @@ contract Mining is Ownable {
     // UniswapV2ERC20 pair token
     IUniswapV2Pair public pair;
 
-    // TWAP price oracle
-    IPriceOracle public oracle;
 
     // Max LP tokens accepted in a capitalization instance
     uint256 public MAX_LP;
@@ -53,7 +50,6 @@ contract Mining is Ownable {
         address _wethAddr,
         address _multisig,
         address _vestingContractAddress,
-        address _oracle,
         address _pairAddr
     ) Ownable(msg.sender) {
         fdicAddress = _fdicAddr;
@@ -62,7 +58,6 @@ contract Mining is Ownable {
         discount = 100; // 1% discount
         MAX_LP = ~uint256(0);
         multisig = _multisig;
-        oracle = IPriceOracle(_oracle);
         pair = IUniswapV2Pair(_pairAddr);
     }
 
